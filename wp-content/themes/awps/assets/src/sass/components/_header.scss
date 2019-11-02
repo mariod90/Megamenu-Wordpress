@@ -1,3 +1,8 @@
+@media only screen and (min-width: 1500px) {
+  .container {
+    max-width: 1400px !important;
+  }
+}
 header {
   position: relative;
 }
@@ -8,6 +13,7 @@ nav#site-navigation {
   border-radius: 2px;
   padding-left: 0;
   padding-right: 0;
+  letter-spacing: 0.53px;
 
   .navbar-brand {
     color: #fff;
@@ -35,8 +41,65 @@ nav#site-navigation {
   .navbar-nav > li.megamenu {
     position: static;
     > .dropdown-menu {
-      width: 100%;
-      max-width: 900px;
+      min-width: 280px;
+      > .megamenu-column {
+        width: 280px;
+        display: block;
+        float: left;
+        &:not(:first-child):after {
+          position: absolute;
+          content: "";
+          display: block;
+          width: 1px;
+          background-color: #eeeeee;
+          height: 100%;
+          top: 0;
+        }
+        ul {
+          padding: 0;
+          margin: 0;
+          list-style: none;
+        }
+        a {
+          font-size: 13px;
+          padding: 4px 20px;
+          display: block;
+          color: #333;
+          &:hover,
+          &:focus {
+            background-color: #f5f5f5;
+            color: #333;
+          }
+        }
+        span.sub {
+          font-size: 11px;
+          padding: 2px 20px;
+          margin-top: -4px;
+          display: block;
+          line-height: 1.6em;
+        }
+        .featured-image {
+          a {
+            font-size: 14px;
+            color: #2e7dd9;
+            font-weight: 500;
+          }
+          img {
+            padding: 5px 0;
+            width: 100%;
+            height: auto;
+          }
+        }
+        .description {
+          a {
+            display: none;
+          }
+        }
+        .dropdown-divider {
+          margin: 16px 20px 10px;
+          max-width: 60px;
+        }
+      }
     }
   }
 }

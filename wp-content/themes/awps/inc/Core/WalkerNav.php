@@ -11,7 +11,7 @@ class WalkerNav extends Walker_Nav_Menu
 
     public function __construct()
     {
-        $this->megaMenuID = 0; //boolean
+        $this->megaMenuID = 0;
         $this->count = 0;
     }
 
@@ -20,14 +20,15 @@ class WalkerNav extends Walker_Nav_Menu
         $indent = str_repeat("\t", $depth);
         $submenu = ($depth > 0) ? ' sub-menu' : '';
         $output .= "\n$indent<ul class=\"dropdown-menu$submenu depth_$depth\" >\n";
-        if ($this->megaMenuID != 0) {
-            $output .= "<li class=\"col-sm-3\"><ul>\n";
+
+        if ($this->megaMenuID != 0 && $depth == 0) {
+            $output .= "<li class=\"megamenu-column\"><ul>\n";
         }
     }
 
     public function end_lvl(&$output, $depth = 0, $args = array())
     {
-        if ($this->megaMenuID != 0) {
+        if ($this->megaMenuID != 0 && $depth == 0) {
             $output .= "</li></ul>";
         }
         $output .= "</ul>";
@@ -35,15 +36,11 @@ class WalkerNav extends Walker_Nav_Menu
 
     public function start_el(&$output, $item, $depth = 0, $args = array(), $id = 0)
     {
-        if ($this->megaMenuID != 0 && $this->megaMenuID === intval($item->menu_item_parent)) {
-            if ($this->count % 4 == 0 && $this->count != 0) {
-                $output .= "</ul></li><li class=\"col-sm-3\"><ul>\n";
-                $this->count = 0;
-            }
-            $this->count++;
-        } else {
-            $this->megaMenuID = 0;
-        }
+        $hasMegamenu = get_post_meta($item->ID, 'menu-item-mm-megamenu', true);
+        $hasColumnDivider = get_post_meta($item->ID, 'menu-item-mm-column-divider', true);
+        $hasDivider = get_post_meta($item->ID, 'menu-item-mm-divider', true);
+        $hasFeaturedImage = get_post_meta($item->ID, 'menu-item-mm-featured-image', true);
+        $hasDescription = get_post_meta($item->ID, 'menu-item-mm-description', true);
 
         $indent = ($depth) ? str_repeat("\t", $depth) : '';
 
@@ -51,21 +48,44 @@ class WalkerNav extends Walker_Nav_Menu
         $class_names = $value = '';
 
         $classes = empty($item->classes) ? array() : (array) $item->classes;
-        // managing divider: add divider class to an element to get a divider before it.
-        $divider_class_position = array_search('divider', $classes);
-        if ($divider_class_position !== false) {
-            $output .= "<li class=\"divider\"></li>\n";
-            unset($classes[$divider_class_position]);
+
+        if ($this->megaMenuID != 0 && $this->megaMenuID != intval($item->menu_item_parent) && $depth == 0) {
+            $this->megaMenuID = 0;
         }
-        if (array_search('megamenu', $classes) !== false) {
+
+        //$column_divider = array_search('column-divider', $classes);
+        if ($hasColumnDivider) {
+            array_push($classes, 'column-divider');
+            $output .= "</ul></li><li class=\"megamenu-column\"><ul>\n";
+        }
+
+        // managing divider: add divider class to an element to get a divider before it.
+        //$divider_class_position = array_search('divider', $classes);
+        if ($hasDivider) {
+            array_push($classes, 'divider');
+            $output .= "<li class=\"dropdown-divider\"></li>\n";
+            //unset($classes[$divider_class_position]);
+        }
+
+        if ($hasMegamenu) {
+            array_push($classes, 'megamenu');
             $this->megaMenuID = $item->ID;
         }
 
         $classes[] = ($args->has_children) ? 'dropdown' : '';
         $classes[] = ($item->current || $item->current_item_ancestor) ? 'active' : '';
         $classes[] = 'nav-item menu-item-' . $item->ID;
+
         if ($depth && $args->has_children) {
             $classes[] = 'dropdown-submenu';
+        }
+
+        if ($hasFeaturedImage) {
+            array_push($classes, 'featured-image');
+        }
+
+        if ($hasDescription) {
+            array_push($classes, 'description');
         }
 
         $class_names = implode(' ', apply_filters('nav_menu_css_class', array_filter($classes), $item, $args));
@@ -84,6 +104,14 @@ class WalkerNav extends Walker_Nav_Menu
 
         $item_output = $args->before;
         $item_output .= '<a' . $attributes . '>';
+
+        //Check if item has featured image
+        //$has_featured_image = array_search('featured-image', $classes);
+        if ($hasFeaturedImage && $this->megaMenuID != 0) {
+            $postID = url_to_postid($item->url);
+            $item_output .= "<img alt=\"" . esc_attr($item->attr_title) . "\"  src=\"" . get_the_post_thumbnail_url($postID) . "\" />";
+        }
+
         $item_output .= $args->link_before . apply_filters('the_title', $item->title, $item->ID) . $args->link_after;
 
         // add support for menu item title
@@ -94,6 +122,9 @@ class WalkerNav extends Walker_Nav_Menu
         if (strlen($item->description) > 2) {
             $item_output .= '</a> <span class="sub">' . $item->description . '</span>';
         }
+
+
+
         $item_output .= (($depth == 0 || 1) && $args->has_children) ? ' <b class="caret"></b></a>' : '</a>';
         $item_output .= $args->after;
 
